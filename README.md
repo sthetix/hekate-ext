@@ -1,9 +1,19 @@
-# hekate - Nyx
+# hekate-ext - Nyx
 
 ![Image of Hekate](https://user-images.githubusercontent.com/3665130/60391760-bc1e8c00-9afe-11e9-8b7a-b065873081b2.png)
 
+**Extended version of hekate with additional features**
 
 Custom Graphical Nintendo Switch bootloader, firmware patcher, tools, and many more.
+
+## What's New in hekate-ext
+
+- **Direct OFW Boot** (`ofw=1` parameter) - Instantly reboot to 100% stock firmware without any hekate processing
+  - No pkg1 loading required
+  - Fastest way to boot into stock firmware (~2-3 seconds)
+  - Perfect for online play or when you need completely clean stock boot
+
+**Based on [hekate by CTCaer](https://github.com/CTCaer/hekate)**
 
 
 
@@ -109,6 +119,7 @@ There are four possible type of entries. "**[ ]**": Boot entry, "**{ }**": Capti
 | emupath={FOLDER path}  | Forces emuMMC to use the selected one. (=emuMMC/RAW1, =emuMMC/SD00, etc). emuMMC must be created by hekate because it uses the raw_based/file_based files. |
 | emummcforce=1          | Forces the use of emuMMC. If emummc.ini is disabled or not found, then it causes an error. |
 | emummc_force_disable=1 | Disables emuMMC, if it's enabled.                           |
+| ofw=1                  | **[hekate-ext]** Direct OFW reboot. Bypasses all hekate boot processing and immediately reboots to 100% stock firmware. Fastest way to boot stock (~2-3s). No pkg1 loading, no patches, pure stock boot. Perfect for online play. |
 | stock=1                | OFW via hekate bootloader. Disables unneeded kernel patching and CFW kips when running stock. `If emuMMC is enabled, emummc_force_disable=1` is required. emuMMC is not supported on stock. If additional KIPs are needed other than OFW's, you can define them with `kip1` key. No kip should be used that relies on Atmosphère patching, because it will hang. If `NOGC` is needed, use `kip1patch=nogc`. |
 | fullsvcperm=1          | Disables SVC verification (full services permission). Doesn't work with Mesosphere as kernel. |
 | debugmode=1            | Enables Debug mode. Obsolete when used with exosphere as secmon. |
@@ -190,7 +201,47 @@ hekate has a boot storage in the binary that helps it configure it outside of BP
 | bpmpclock=1        | 0: Auto, 1: Fastest, 2: Faster, 3: Fast. Use 2 or 3 if Nyx hangs or some functions like UMS/Backup Verification fail. |
 
 
+## Example hekate_ipl.ini with OFW Boot
+
+```ini
+[config]
+autoboot=0
+autoboot_list=0
+bootwait=0
+verification=1
+backlight=100
+autohosoff=2
+autonogc=1
+updater2p=1
+
+[100% STOCK OFW]
+ofw=1
+icon=bootloader/res/ofw.bmp
+
+[SEMI-STOCK (SYSMMC)]
+pkg3=atmosphere/package3
+stock=1
+emummc_force_disable=1
+icon=bootloader/res/stock.bmp
+
+[CFW (SYSMMC)]
+pkg3=atmosphere/package3
+kip1patch=nosigchk
+emummc_force_disable=1
+icon=bootloader/res/sysnand.bmp
+
+[CFW (EMUMMC)]
+pkg3=atmosphere/package3
+kip1patch=nosigchk
+emummcforce=1
+icon=bootloader/res/emummc.bmp
 ```
+
+
+```
+hekate-ext (c) 2025, sthetix
+           Based on hekate by CTCaer
+
 hekate  (c) 2018,      naehrwert, st4rk.
         (c) 2018-2025, CTCaer.
 

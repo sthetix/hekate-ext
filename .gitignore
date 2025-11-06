@@ -1,5 +1,6 @@
 .vs
 .vscode
+.claude
 build/*
 output/*
 loader/payload_00.h

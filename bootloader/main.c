@@ -446,7 +446,34 @@ parse_failed:
 	}
 	else
 	{
-		hos_launch(cfg_sec);
+		// Check for ofw=1 flag and reboot to OFW directly without hos_launch.
+		bool ofw_reboot = false;
+		if (cfg_sec)
+		{
+			LIST_FOREACH_ENTRY(ini_kv_t, kv, &cfg_sec->kvs, link)
+			{
+				if (!strcmp("ofw", kv->key) && kv->val[0] == '1')
+				{
+					ofw_reboot = true;
+					break;
+				}
+			}
+		}
+
+		if (ofw_reboot)
+		{
+			gfx_con.mute = false;
+			gfx_clear_grey(0x1B);
+			gfx_con_setpos(0, 0);
+			gfx_printf("\nRebooting to 100%% Stock OFW...\n");
+			msleep(1000);
+
+			power_set_state(REBOOT_BYPASS_FUSES);
+		}
+		else
+		{
+			hos_launch(cfg_sec);
+		}
 
 wrong_emupath:
 		if (emummc_path)
@@ -591,7 +618,34 @@ parse_failed:
 	}
 	else
 	{
-		hos_launch(cfg_sec);
+		// Check for ofw=1 flag and reboot to OFW directly without hos_launch.
+		bool ofw_reboot = false;
+		if (cfg_sec)
+		{
+			LIST_FOREACH_ENTRY(ini_kv_t, kv, &cfg_sec->kvs, link)
+			{
+				if (!strcmp("ofw", kv->key) && kv->val[0] == '1')
+				{
+					ofw_reboot = true;
+					break;
+				}
+			}
+		}
+
+		if (ofw_reboot)
+		{
+			gfx_con.mute = false;
+			gfx_clear_grey(0x1B);
+			gfx_con_setpos(0, 0);
+			gfx_printf("\nRebooting to 100%% Stock OFW...\n");
+			msleep(1000);
+
+			power_set_state(REBOOT_BYPASS_FUSES);
+		}
+		else
+		{
+			hos_launch(cfg_sec);
+		}
 
 wrong_emupath:
 		if (emummc_path)
@@ -1000,16 +1054,43 @@ skip_list:
 	}
 	else
 	{
-		if (b_cfg.boot_cfg & BOOT_CFG_TO_EMUMMC)
-			emummc_set_path(b_cfg.emummc_path);
-		else if (emummc_path && !emummc_set_path(emummc_path))
+		// Check for ofw=1 flag and reboot to OFW directly without hos_launch.
+		bool ofw_reboot = false;
+		if (cfg_sec)
 		{
-			gfx_con.mute = false;
-			EPRINTF("emupath is wrong!");
-			goto wrong_emupath;
+			LIST_FOREACH_ENTRY(ini_kv_t, kv, &cfg_sec->kvs, link)
+			{
+				if (!strcmp("ofw", kv->key) && kv->val[0] == '1')
+				{
+					ofw_reboot = true;
+					break;
+				}
+			}
 		}
 
-		hos_launch(cfg_sec);
+		if (ofw_reboot)
+		{
+			gfx_con.mute = false;
+			gfx_clear_grey(0x1B);
+			gfx_con_setpos(0, 0);
+			gfx_printf("\nRebooting to 100%% Stock OFW...\n");
+			msleep(2000);
+
+			power_set_state(REBOOT_BYPASS_FUSES);
+		}
+		else
+		{
+			if (b_cfg.boot_cfg & BOOT_CFG_TO_EMUMMC)
+				emummc_set_path(b_cfg.emummc_path);
+			else if (emummc_path && !emummc_set_path(emummc_path))
+			{
+				gfx_con.mute = false;
+				EPRINTF("emupath is wrong!");
+				goto wrong_emupath;
+			}
+
+			hos_launch(cfg_sec);
+		}
 
 wrong_emupath:
 		if (emummc_path || b_cfg.boot_cfg & BOOT_CFG_TO_EMUMMC)
@@ -1353,7 +1434,9 @@ static void _ipl_reload()
 static void _about()
 {
 	static const char credits[] =
-		"\nhekate   (c) 2018,      naehrwert, st4rk\n\n"
+		"\nhekate-ext   (c) 2025, sthetix\n"
+		"             Based on hekate by CTCaer\n\n"
+		"hekate   (c) 2018,      naehrwert, st4rk\n\n"
 		"         (c) 2018-2025, CTCaer\n\n"
 		" ___________________________________________\n\n"
 		"Thanks to: %kderrek, nedwill, plutoo,\n"
@@ -1450,7 +1533,7 @@ ment_t ment_top[] = {
 	MDEF_END()
 };
 
-menu_t menu_top = { ment_top, "hekate v6.3.1", 0, 0 };
+menu_t menu_top = { ment_top, "hekate-ext v6.3.1", 0, 0 };
 
 extern void pivot_stack(u32 stack_top);
 
