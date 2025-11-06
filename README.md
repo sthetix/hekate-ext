@@ -239,9 +239,6 @@ icon=bootloader/res/emummc.bmp
 
 
 ```
-hekate-ext (c) 2025, sthetix
-           Based on hekate by CTCaer
-
 hekate  (c) 2018,      naehrwert, st4rk.
         (c) 2018-2025, CTCaer.
 
