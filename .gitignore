@@ -10,3 +10,6 @@ tools/bin2c/bin2c.exe
 tools/lz/lz77
 tools/lz/lz77.exe
 releases/*
+MERGE_SUMMARY.md
+UPDATE_GUIDE.md
+

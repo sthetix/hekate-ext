@@ -1,19 +1,13 @@
 # hekate-ext - Nyx
 
+> **hekate-ext** by sthetix - Extended version based on hekate v6.4.0 by CTCaer
+> 
+> This version adds instant OFW boot support for the fastest possible stock firmware launch.
+
 ![Image of Hekate](https://user-images.githubusercontent.com/3665130/60391760-bc1e8c00-9afe-11e9-8b7a-b065873081b2.png)
 
-**Extended version of hekate with additional features**
 
 Custom Graphical Nintendo Switch bootloader, firmware patcher, tools, and many more.
-
-## What's New in hekate-ext
-
-- **Direct OFW Boot** (`ofw=1` parameter) - Instantly reboot to 100% stock firmware without any hekate processing
-  - No pkg1 loading required
-  - Fastest way to boot into stock firmware (~2-3 seconds)
-  - Perfect for online play or when you need completely clean stock boot
-
-**Based on [hekate by CTCaer](https://github.com/CTCaer/hekate)**
 
 
 
@@ -119,8 +113,8 @@ There are four possible type of entries. "**[ ]**": Boot entry, "**{ }**": Capti
 | emupath={FOLDER path}  | Forces emuMMC to use the selected one. (=emuMMC/RAW1, =emuMMC/SD00, etc). emuMMC must be created by hekate because it uses the raw_based/file_based files. |
 | emummcforce=1          | Forces the use of emuMMC. If emummc.ini is disabled or not found, then it causes an error. |
 | emummc_force_disable=1 | Disables emuMMC, if it's enabled.                           |
-| ofw=1                  | **[hekate-ext]** Direct OFW reboot. Bypasses all hekate boot processing and immediately reboots to 100% stock firmware. Fastest way to boot stock (~2-3s). No pkg1 loading, no patches, pure stock boot. Perfect for online play. |
 | stock=1                | OFW via hekate bootloader. Disables unneeded kernel patching and CFW kips when running stock. `If emuMMC is enabled, emummc_force_disable=1` is required. emuMMC is not supported on stock. If additional KIPs are needed other than OFW's, you can define them with `kip1` key. No kip should be used that relies on Atmosphère patching, because it will hang. If `NOGC` is needed, use `kip1patch=nogc`. |
+| ofw=1                  | 100% Stock OFW boot. Bypasses ALL hekate boot processing for instant stock firmware boot (~2-3s). Perfect for online play or when completely clean stock firmware is needed. Only works on units without AutoRCM enabled or Mariko units. This is different from `stock=1` which still processes the boot through hekate. |
 | fullsvcperm=1          | Disables SVC verification (full services permission). Doesn't work with Mesosphere as kernel. |
 | debugmode=1            | Enables Debug mode. Obsolete when used with exosphere as secmon. |
 | kernelprocid=1         | Enables stock kernel process id send/recv patching. Not needed when `pkg3`/`fss0` is used. |
@@ -191,51 +185,15 @@ hekate has a boot storage in the binary that helps it configure it outside of BP
 | themebg=2d2d2d     | Sets Nyx background color in HEX. EXPERIMENTAL.            |
 | themecolor=167     | Sets Nyx color of text highlights.                         |
 | entries5col=0      | 1: Sets Launch entry columns from 4 to 5 per line. For a total of 10 entries. |
-| timeoff=100        | Sets time offset in HEX. Must be in HOS epoch format       |
+| timeoffset=100     | Sets time offset in HEX. Must be in epoch format           |
+| timedst=0          | Enables automatic daylight saving hour adjustment          |
 | homescreen=0       | Sets home screen. 0: Home menu, 1: All configs (merges Launch and More configs), 2: Launch, 3: More Configs. |
 | verification=1     | 0: Disable Backup/Restore verification, 1: Sparse (block based, fast and mostly reliable), 2: Full (sha256 based, slow and 100% reliable). |
 | ------------------ | ------- The following options can only be edited in nyx.ini ------- |
 | umsemmcrw=0        | 1: eMMC/emuMMC UMS will be mounted as writable by default. |
 | jcdisable=0        | 1: Disables Joycon driver completely.                      |
 | jcforceright=0     | 1: Forces right joycon to be used as main mouse control.   |
-| bpmpclock=1        | 0: Auto, 1: Fastest, 2: Faster, 3: Fast. Use 2 or 3 if Nyx hangs or some functions like UMS/Backup Verification fail. |
-
-
-## Example hekate_ipl.ini with OFW Boot
-
-```ini
-[config]
-autoboot=0
-autoboot_list=0
-bootwait=0
-verification=1
-backlight=100
-autohosoff=2
-autonogc=1
-updater2p=1
-
-[100% STOCK OFW]
-ofw=1
-icon=bootloader/res/ofw.bmp
-
-[SEMI-STOCK (SYSMMC)]
-pkg3=atmosphere/package3
-stock=1
-emummc_force_disable=1
-icon=bootloader/res/stock.bmp
-
-[CFW (SYSMMC)]
-pkg3=atmosphere/package3
-kip1patch=nosigchk
-emummc_force_disable=1
-icon=bootloader/res/sysnand.bmp
-
-[CFW (EMUMMC)]
-pkg3=atmosphere/package3
-kip1patch=nosigchk
-emummcforce=1
-icon=bootloader/res/emummc.bmp
-```
+| bpmpclock=1        | 0: Auto, 1: 589 MHz, 2: 576 MHz, 3: 563 MHz, 4: 544 MHz, 5: 408 MHz. Use 2 to 5 if Nyx hangs or some functions like UMS/Backup Verification fail. |
 
 
 ```
@@ -279,10 +237,3 @@ Open source and free packages used:
       `--'`   ) )    .-'.'      '.'.  | (
              (/`    ( (`          ) )  '-;   [switchbrew]
 ```
-## Support My Work
-
-If you find this project useful, please consider supporting me by buying me a coffee!
-
-<a href="https://www.buymeacoffee.com/sthetixofficial" target="_blank">
-  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
-</a>
