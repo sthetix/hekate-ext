@@ -12,4 +12,5 @@ tools/lz/lz77.exe
 releases/*
 MERGE_SUMMARY.md
 UPDATE_GUIDE.md
+Release*.md
 
