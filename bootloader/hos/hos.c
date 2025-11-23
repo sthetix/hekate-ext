@@ -706,8 +706,13 @@ void hos_launch(ini_sec_t *cfg)
 	launch_ctxt_t ctxt = {0};
 	tsec_ctxt_t tsec_ctxt = {0};
 
-	// Check for ofw=1 flag FIRST, before any hardware init.
-	// This ensures clean state for OFW reboot, matching the "Reboot > OFW" button behavior.
+	minerva_change_freq(FREQ_1600);
+	sdram_src_pllc(true);
+	list_init(&ctxt.kip1_list);
+
+	ctxt.cfg = cfg;
+
+	// Check for ofw=1 flag early, before any file loading or hardware init.
 	if (cfg)
 	{
 		LIST_FOREACH_ENTRY(ini_kv_t, kv, &cfg->kvs, link)
@@ -724,12 +729,6 @@ void hos_launch(ini_sec_t *cfg)
 			}
 		}
 	}
-
-	minerva_change_freq(FREQ_1600);
-	sdram_src_pllc(true);
-	list_init(&ctxt.kip1_list);
-
-	ctxt.cfg = cfg;
 
 	if (!gfx_con.mute)
 		gfx_clear_grey(0x1B);
