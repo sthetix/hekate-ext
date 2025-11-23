@@ -462,12 +462,6 @@ parse_failed:
 
 		if (ofw_reboot)
 		{
-			gfx_con.mute = false;
-			gfx_clear_grey(0x1B);
-			gfx_con_setpos(0, 0);
-			gfx_printf("\nRebooting to 100%% Stock OFW...\n");
-			msleep(1000);
-
 			power_set_state(REBOOT_BYPASS_FUSES);
 		}
 		else
@@ -634,12 +628,6 @@ parse_failed:
 
 		if (ofw_reboot)
 		{
-			gfx_con.mute = false;
-			gfx_clear_grey(0x1B);
-			gfx_con_setpos(0, 0);
-			gfx_printf("\nRebooting to 100%% Stock OFW...\n");
-			msleep(1000);
-
 			power_set_state(REBOOT_BYPASS_FUSES);
 		}
 		else
@@ -1074,12 +1062,6 @@ skip_list:
 
 		if (ofw_reboot)
 		{
-			gfx_con.mute = false;
-			gfx_clear_grey(0x1B);
-			gfx_con_setpos(0, 0);
-			gfx_printf("\nRebooting to 100%% Stock OFW...\n");
-			msleep(2000);
-
 			power_set_state(REBOOT_BYPASS_FUSES);
 		}
 		else
