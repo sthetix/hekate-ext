@@ -4,18 +4,20 @@
 
 When hekate releases a new version:
 
-## 🚀 Fastest Method (File Copy + Auto Patch)
+## 🚀 Recommended Method (File Copy + Manual Apply)
 
-```bash
-# Just run this:
-update_from_upstream_copy.bat
+```powershell
+# Run this script:
+.\update_from_upstream_simple.ps1
 ```
 
-That's it! The script will:
-1. ✓ Backup your work
-2. ✓ Copy files from `D:\Coding\hekate`
-3. ✓ Auto-apply OFW patches
-4. ✓ Tell you what needs manual fixing
+The script will:
+1. ✓ Auto-update local hekate clone (`D:\Coding\hekate`)
+2. ✓ Copy all files to hekate-ext
+3. ✓ Create backup branch
+4. ✓ Show you exactly what to change (step-by-step)
+
+**Why manual?** Line numbers change between versions, so patches often fail. Manual is faster and more reliable.
 
 ## 📋 Manual Steps After Script
 
