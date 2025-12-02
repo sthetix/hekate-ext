@@ -9,15 +9,41 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "hekate-ext Update Helper" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
-# Check if source exists
+# Check if source exists, clone if not
 if (-not (Test-Path $HekatePath)) {
-    Write-Host "ERROR: Hekate directory not found: $HekatePath" -ForegroundColor Red
-    Write-Host "`nUsage: .\update_from_upstream.ps1 [-HekatePath 'path']" -ForegroundColor Yellow
-    exit 1
+    Write-Host "Hekate directory not found at: $HekatePath" -ForegroundColor Yellow
+    Write-Host "Cloning from GitHub...`n" -ForegroundColor Cyan
+
+    $parentDir = Split-Path $HekatePath -Parent
+    if (-not (Test-Path $parentDir)) {
+        New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+    }
+
+    git clone https://github.com/CTCaer/hekate.git $HekatePath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "ERROR: Failed to clone hekate repository" -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Clone complete!`n" -ForegroundColor Green
 }
 
+# Update local hekate clone
 Write-Host "Source: $HekatePath" -ForegroundColor Gray
 Write-Host "Target: $PWD`n" -ForegroundColor Gray
+
+Write-Host "Updating local hekate repository..." -ForegroundColor Cyan
+Push-Location $HekatePath
+git fetch origin 2>&1 | Out-Null
+$currentBranch = git rev-parse --abbrev-ref HEAD
+git pull origin $currentBranch 2>&1 | Out-Null
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "  Local hekate updated to latest version" -ForegroundColor Green
+} else {
+    Write-Host "  Warning: Could not update local hekate (continuing with current version)" -ForegroundColor Yellow
+}
+Pop-Location
+
+Write-Host ""
 
 # Show versions
 Write-Host "Current versions:" -ForegroundColor Yellow
@@ -68,33 +94,31 @@ Write-Host "Files copied successfully." -ForegroundColor Green
 # Step 4: Apply patches
 Write-Host "`n[4/5] Applying OFW patches...`n" -ForegroundColor Cyan
 
-$patch1Success = $false
-$patch2Success = $false
+$patches = @(
+    "003-ofw-hos-h.patch",
+    "004-ofw-hos-config.patch",
+    "005-ofw-and-branding-main.patch",
+    "006-branding-gui.patch",
+    "007-ofw-template.patch",
+    "008-readme-docs.patch"
+)
 
-# Apply patch 1
-try {
-    git apply patches\001-ofw-main.patch 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "  [OK] Applied 001-ofw-main.patch" -ForegroundColor Green
-        $patch1Success = $true
-    } else {
-        throw "Patch failed"
-    }
-} catch {
-    Write-Host "  [FAIL] Could not apply 001-ofw-main.patch - manual fix needed" -ForegroundColor Red
-}
+$allSuccess = $true
+$failedPatches = @()
 
-# Apply patch 2
-try {
-    git apply patches\002-ofw-hos.patch 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "  [OK] Applied 002-ofw-hos.patch" -ForegroundColor Green
-        $patch2Success = $true
-    } else {
-        throw "Patch failed"
+foreach ($patch in $patches) {
+    try {
+        git apply "patches\$patch" 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  [OK] Applied $patch" -ForegroundColor Green
+        } else {
+            throw "Patch failed"
+        }
+    } catch {
+        Write-Host "  [FAIL] Could not apply $patch" -ForegroundColor Red
+        $allSuccess = $false
+        $failedPatches += $patch
     }
-} catch {
-    Write-Host "  [FAIL] Could not apply 002-ofw-hos.patch - manual fix needed" -ForegroundColor Red
 }
 
 # Step 5: Summary
@@ -109,14 +133,12 @@ Write-Host "1. Review changes:" -ForegroundColor White
 Write-Host "   git status" -ForegroundColor Gray
 Write-Host "   git diff`n" -ForegroundColor Gray
 
-if (-not ($patch1Success -and $patch2Success)) {
+if (-not $allSuccess) {
     Write-Host "2. MANUAL FIXES NEEDED:" -ForegroundColor Red
     Write-Host "   - See CUSTOM_CHANGES.md for reference" -ForegroundColor Gray
-    if (-not $patch1Success) {
-        Write-Host "   - Fix bootloader/main.c (remove OFW gfx messages)" -ForegroundColor Gray
-    }
-    if (-not $patch2Success) {
-        Write-Host "   - Fix bootloader/hos/hos.c (remove early OFW check)" -ForegroundColor Gray
+    Write-Host "   - Failed patches:" -ForegroundColor Gray
+    foreach ($patch in $failedPatches) {
+        Write-Host "     * $patch" -ForegroundColor Gray
     }
     Write-Host ""
 }
