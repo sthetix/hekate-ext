@@ -1420,9 +1420,7 @@ static void _ipl_reload()
 static void _about()
 {
 	static const char credits[] =
-		"\nhekate-ext   (c) 2025, sthetix\n"
-		"             Based on hekate by CTCaer\n\n"
-		"hekate   (c) 2018,      naehrwert, st4rk\n\n"
+		"\nhekate   (c) 2018,      naehrwert, st4rk\n\n"
 		"         (c) 2018-2025, CTCaer\n\n"
 		" ___________________________________________\n\n"
 		"Thanks to: %kderrek, nedwill, plutoo,\n"

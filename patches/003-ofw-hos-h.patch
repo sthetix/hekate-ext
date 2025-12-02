@@ -1,0 +1,12 @@
+diff --git a/bootloader/hos/hos.h b/bootloader/hos/hos.h
+index 8bce245..fc1761c 100644
+--- a/bootloader/hos/hos.h
++++ b/bootloader/hos/hos.h
+@@ -111,6 +111,7 @@ typedef struct _launch_ctxt_t
+ 	bool svcperm;
+ 	bool debugmode;
+ 	bool stock;
++	bool ofw;
+ 	bool emummc_forced;
+ 
+ 	void *pkg3;

@@ -1,0 +1,21 @@
+diff --git a/res/hekate_ipl_template.ini b/res/hekate_ipl_template.ini
+index 414c4fe..8d78078 100644
+--- a/res/hekate_ipl_template.ini
++++ b/res/hekate_ipl_template.ini
+@@ -26,6 +26,16 @@ emummc_force_disable=1
+ # This is the closest to OFW, especially when AutoRCM is needed.
+ 
+ 
++[100% Stock OFW]
++ofw=1
++
++# This is a true 100% stock firmware boot.
++# It bypasses ALL hekate boot processing for the fastest possible stock boot.
++# Perfect for online play or when you need completely clean stock firmware.
++# Boot time: ~2-3 seconds.
++# Note: This only works on units without AutoRCM enabled or Mariko units.
++
++
+ 
+ {-- Custom Firmwares --}
+ [Atmo Vanilla]

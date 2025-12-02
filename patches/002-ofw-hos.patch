@@ -1,0 +1,27 @@
+--- a/bootloader/hos/hos.c
++++ b/bootloader/hos/hos.c
+@@ -712,24 +712,6 @@ void hos_launch(ini_sec_t *cfg)
+
+ 	ctxt.cfg = cfg;
+
+-	// Check for ofw=1 flag early, before any file loading or hardware init.
+-	if (cfg)
+-	{
+-		LIST_FOREACH_ENTRY(ini_kv_t, kv, &cfg->kvs, link)
+-		{
+-			if (!strcmp("ofw", kv->key) && kv->val[0] == '1')
+-			{
+-				gfx_con.mute = false;
+-				gfx_clear_grey(0x1B);
+-				gfx_con_setpos(0, 0);
+-				gfx_printf("\nRebooting to 100%% Stock OFW...\n");
+-				msleep(1000);
+-
+-				power_set_state(REBOOT_BYPASS_FUSES);
+-			}
+-		}
+-	}
+-
+ 	if (!gfx_con.mute)
+ 		gfx_clear_grey(0x1B);
+ 	gfx_con_setpos(0, 0);

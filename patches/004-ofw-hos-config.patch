@@ -1,0 +1,29 @@
+diff --git a/bootloader/hos/hos_config.c b/bootloader/hos/hos_config.c
+index eb64ae1..6d1d378 100644
+--- a/bootloader/hos/hos_config.c
++++ b/bootloader/hos/hos_config.c
+@@ -175,6 +175,16 @@ static int _config_stock(launch_ctxt_t *ctxt, const char *value)
+ 	return 1;
+ }
+ 
++static int _config_ofw(launch_ctxt_t *ctxt, const char *value)
++{
++	if (*value == '1')
++	{
++		DPRINTF("Direct OFW reboot enabled\n");
++		ctxt->ofw = true;
++	}
++	return 1;
++}
++
+ static int _config_emummc_forced(launch_ctxt_t *ctxt, const char *value)
+ {
+ 	if (*value == '1')
+@@ -285,6 +295,7 @@ typedef struct _cfg_handler_t
+ 
+ static const cfg_handler_t _config_handlers[] = {
+ 	{ "stock",            _config_stock },
++	{ "ofw",              _config_ofw },
+ 	{ "warmboot",         _config_warmboot },
+ 	{ "secmon",           _config_secmon },
+ 	{ "kernel",           _config_kernel },
