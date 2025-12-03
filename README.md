@@ -1,6 +1,6 @@
 # hekate-ext - Nyx
 
-> **hekate-ext** by sthetix - Extended version based on hekate v6.4.2 by CTCaer
+> **hekate-ext** by sthetix - Extended version based on hekate by CTCaer
 > 
 > This version adds instant OFW boot support for the fastest possible stock firmware launch.
 
