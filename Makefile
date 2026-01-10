@@ -72,6 +72,13 @@ CUSTOMDEFINES += -DBDK_MALLOC_NO_DEFRAG -DBDK_MC_ENABLE_AHB_REDIRECT -DBDK_EMUMM
 CUSTOMDEFINES += -DBDK_WATCHDOG_FIQ_ENABLE -DBDK_RESTART_BL_ON_WDT
 CUSTOMDEFINES += -DGFX_INC=$(GFX_INC) -DFFCFG_INC=$(FFCFG_INC)
 
+# DRAM 8GB mode support.
+ifeq ($(DRAM_8GB),1)
+CUSTOMDEFINES += -DCONFIG_DRAM_8GB=1
+else
+CUSTOMDEFINES += -DCONFIG_DRAM_8GB=0
+endif
+
 #CUSTOMDEFINES += -DDEBUG
 
 # UART Logging: Max baudrate 12.5M.
@@ -96,7 +103,7 @@ TOOLS := $(TOOLSLZ) $(TOOLSB2C)
 
 ################################################################################
 
-.PHONY: all clean $(MODULEDIRS) $(NYXDIR) $(LDRDIR) $(TOOLS)
+.PHONY: all all-both release clean $(MODULEDIRS) $(NYXDIR) $(LDRDIR) $(TOOLS)
 
 all: $(TARGET).bin $(LDRDIR)
 	@printf ICTC49 >> $(OUTPUTDIR)/$(TARGET).bin
@@ -115,7 +122,69 @@ all: $(TARGET).bin $(LDRDIR)
 clean: $(TOOLS)
 	@rm -rf $(OBJS)
 	@rm -rf $(BUILDDIR)
-	@rm -rf $(OUTPUTDIR)
+	@-rm -rf $(OUTPUTDIR) 2>/dev/null || true
+	@rm -f $(OUTPUTDIR)/*.bin $(OUTPUTDIR)/*.bso 2>/dev/null || true
+
+all-both:
+	@$(MAKE) --no-print-directory
+	@mv $(OUTPUTDIR)/$(TARGET).bin $(OUTPUTDIR)/$(TARGET)_4gb.bin
+	@mv $(OUTPUTDIR)/$(TARGET)_4gb.bin ../$(TARGET)_4gb.bin
+	@rm -rf $(BUILDDIR)
+	@$(MAKE) --no-print-directory DRAM_8GB=1
+	@mv ../$(TARGET)_4gb.bin $(OUTPUTDIR)/$(TARGET)_4gb.bin
+	@mv $(OUTPUTDIR)/$(TARGET).bin $(OUTPUTDIR)/$(TARGET)_8gb.bin
+	@echo "--------------------------------------"
+	@echo "Built 4GB and 8GB versions:"
+	@echo "  $(OUTPUTDIR)/$(TARGET)_4gb.bin"
+	@echo "  $(OUTPUTDIR)/$(TARGET)_8gb.bin"
+	@echo "--------------------------------------"
+
+release:
+	@echo "Building release packages..."
+	@$(MAKE) --no-print-directory all-both
+	@-rm -rf release 2>/dev/null || true
+	@rm -f release/*.zip 2>/dev/null || true
+	@mkdir -p release
+	$(eval VERSION := $(BLVERSION_MAJOR).$(BLVERSION_MINOR).$(BLVERSION_HOTFX))
+	@echo "Creating 4GB release..."
+	@mkdir -p release/hekate-ext-$(VERSION)-4GB/bootloader/ini
+	@mkdir -p release/hekate-ext-$(VERSION)-4GB/bootloader/payloads
+	@mkdir -p release/hekate-ext-$(VERSION)-4GB/bootloader/res
+	@mkdir -p release/hekate-ext-$(VERSION)-4GB/bootloader/sys/l4t
+	@cp $(OUTPUTDIR)/$(TARGET)_4gb.bin release/hekate-ext-$(VERSION)-4GB/payload.bin
+	@touch release/hekate-ext-$(VERSION)-4GB/bootloader/update.bin
+	@cp $(OUTPUTDIR)/nyx.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
+	@cp $(OUTPUTDIR)/libsys_lp0.bso release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
+	@cp $(OUTPUTDIR)/libsys_minerva.bso release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
+	@cp res/hekate_ipl_template.ini release/hekate-ext-$(VERSION)-4GB/bootloader/ini/hekate_ipl.ini
+	@cp extras/res/*.bmp release/hekate-ext-$(VERSION)-4GB/bootloader/res/
+	@cp extras/sys/emummc.kipm release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
+	@cp extras/sys/res.pak release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
+	@cp extras/sys/thk.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
+	@cp extras/sys/l4t/*.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/l4t/
+	@powershell -Command "Compress-Archive -Path 'release/hekate-ext-$(VERSION)-4GB/*' -DestinationPath 'release/hekate-ext-$(VERSION)-4GB.zip' -Force"
+	@echo "Creating 8GB release..."
+	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/ini
+	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/payloads
+	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/res
+	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/sys/l4t
+	@cp $(OUTPUTDIR)/$(TARGET)_8gb.bin release/hekate-ext-$(VERSION)-8GB/payload.bin
+	@touch release/hekate-ext-$(VERSION)-8GB/bootloader/update.bin
+	@cp $(OUTPUTDIR)/nyx.bin release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
+	@cp $(OUTPUTDIR)/libsys_lp0.bso release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
+	@cp $(OUTPUTDIR)/libsys_minerva.bso release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
+	@cp res/hekate_ipl_template.ini release/hekate-ext-$(VERSION)-8GB/bootloader/ini/hekate_ipl.ini
+	@cp extras/res/*.bmp release/hekate-ext-$(VERSION)-8GB/bootloader/res/
+	@cp extras/sys/emummc.kipm release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
+	@cp extras/sys/res.pak release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
+	@cp extras/sys/thk.bin release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
+	@cp extras/sys/l4t/*.bin release/hekate-ext-$(VERSION)-8GB/bootloader/sys/l4t/
+	@powershell -Command "Compress-Archive -Path 'release/hekate-ext-$(VERSION)-8GB/*' -DestinationPath 'release/hekate-ext-$(VERSION)-8GB.zip' -Force"
+	@echo "--------------------------------------"
+	@echo "Release packages created:"
+	@echo "  release/hekate-ext-$(VERSION)-4GB.zip"
+	@echo "  release/hekate-ext-$(VERSION)-8GB.zip"
+	@echo "--------------------------------------"
 
 $(MODULEDIRS):
 	@$(MAKE) --no-print-directory -C $@ $(MAKECMDGOALS) -$(MAKEFLAGS)
