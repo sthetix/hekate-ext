@@ -152,7 +152,7 @@ release:
 	@mkdir -p release/hekate-ext-$(VERSION)-4GB/bootloader/res
 	@mkdir -p release/hekate-ext-$(VERSION)-4GB/bootloader/sys/l4t
 	@cp $(OUTPUTDIR)/$(TARGET)_4gb.bin release/hekate-ext-$(VERSION)-4GB/payload.bin
-	@touch release/hekate-ext-$(VERSION)-4GB/bootloader/update.bin
+	@cp $(OUTPUTDIR)/$(TARGET)_4gb.bin release/hekate-ext-$(VERSION)-4GB/bootloader/update.bin
 	@cp $(OUTPUTDIR)/nyx.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
 	@cp $(OUTPUTDIR)/libsys_lp0.bso release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
 	@cp $(OUTPUTDIR)/libsys_minerva.bso release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
@@ -169,7 +169,7 @@ release:
 	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/res
 	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/sys/l4t
 	@cp $(OUTPUTDIR)/$(TARGET)_8gb.bin release/hekate-ext-$(VERSION)-8GB/payload.bin
-	@touch release/hekate-ext-$(VERSION)-8GB/bootloader/update.bin
+	@cp $(OUTPUTDIR)/$(TARGET)_8gb.bin release/hekate-ext-$(VERSION)-8GB/bootloader/update.bin
 	@cp $(OUTPUTDIR)/nyx.bin release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
 	@cp $(OUTPUTDIR)/libsys_lp0.bso release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
 	@cp $(OUTPUTDIR)/libsys_minerva.bso release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
