@@ -14,6 +14,7 @@ include ./Versions.inc
 
 TARGET := hekate
 BUILDDIR := build
+BUILDTDIR := build/$(TARGET)
 OUTPUTDIR := output
 SOURCEDIR = bootloader
 BDKDIR := bdk
@@ -21,42 +22,33 @@ BDKINC := -I./$(BDKDIR)
 VPATH = $(dir ./$(SOURCEDIR)/) $(dir $(wildcard ./$(SOURCEDIR)/*/)) $(dir $(wildcard ./$(SOURCEDIR)/*/*/))
 VPATH += $(dir $(wildcard ./$(BDKDIR)/)) $(dir $(wildcard ./$(BDKDIR)/*/)) $(dir $(wildcard ./$(BDKDIR)/*/*/))
 
+# Track compiler flags
+TRACK_CFLAGS = $(BUILDTDIR)/.cflags
+TRACK_LDFLAGS = $(BUILDTDIR)/.ldflags
+
 # Main and graphics.
-OBJS = $(addprefix $(BUILDDIR)/$(TARGET)/, \
-	start.o exception_handlers.o \
-	main.o heap.o \
-	gfx.o logos.o tui.o \
-	l4t.o fe_info.o fe_tools.o \
-)
+OBJS =  start exception_handlers main heap gfx logos tui fe_info fe_tools
 
 # Hardware.
-OBJS += $(addprefix $(BUILDDIR)/$(TARGET)/, \
-	bpmp.o ccplex.o clock.o di.o i2c.o irq.o timer.o \
-	mc.o sdram.o minerva.o \
-	gpio.o pinmux.o pmc.o se.o smmu.o tsec.o uart.o \
-	fuse.o kfuse.o \
-	sdmmc.o sdmmc_driver.o emmc.o sd.o emummc.o \
-	bq24193.o max17050.o max7762x.o max77620-rtc.o \
-	hw_init.o \
-)
+OBJS += bpmp ccplex clock di i2c irq timer \
+		mc sdram minerva smmu \
+		gpio pinmux pmc se tsec uart \
+		fuse kfuse \
+		sdmmc sdmmc_driver emmc sd emummc \
+		bq24193 max17050 max7762x max77620-rtc \
+		hw_init
 
 # Utilities.
-OBJS += $(addprefix $(BUILDDIR)/$(TARGET)/, \
-	btn.o dirlist.o ianos.o util.o \
-	config.o ini.o \
-)
+OBJS += btn dirlist ianos ini util config
 
-# Horizon.
-OBJS += $(addprefix $(BUILDDIR)/$(TARGET)/, \
-	hos.o hos_config.o pkg1.o pkg2.o pkg3.o pkg2_ini_kippatch.o secmon_exo.o \
-)
+# OS loaders.
+OBJS += l4t hos hos_config pkg1 pkg2 pkg3 pkg2_ini_kippatch secmon_exo
 
 # Libraries.
-OBJS += $(addprefix $(BUILDDIR)/$(TARGET)/, \
-	lz.o lz4.o blz.o \
-	diskio.o ff.o ffunicode.o ffsystem.o \
-	elfload.o elfreloc_arm.o \
-)
+OBJS += lz lz4 blz diskio ff ffunicode ffsystem elfload elfreloc_arm
+
+OBJS := $(addsuffix .o, $(OBJS))
+OBJS := $(addprefix $(BUILDTDIR)/, $(OBJS))
 
 GFX_INC   := '"../$(SOURCEDIR)/gfx/gfx.h"'
 FFCFG_INC := '"../$(SOURCEDIR)/libs/fatfs/ffconf.h"'
@@ -67,17 +59,17 @@ CUSTOMDEFINES := -DIPL_LOAD_ADDR=$(IPL_LOAD_ADDR) -DBL_MAGIC=$(IPL_MAGIC)
 CUSTOMDEFINES += -DBL_VER_MJ=$(BLVERSION_MAJOR) -DBL_VER_MN=$(BLVERSION_MINOR) -DBL_VER_HF=$(BLVERSION_HOTFX) -DBL_VER_RL=$(BLVERSION_REL)
 CUSTOMDEFINES += -DNYX_VER_MJ=$(NYXVERSION_MAJOR) -DNYX_VER_MN=$(NYXVERSION_MINOR) -DNYX_VER_HF=$(NYXVERSION_HOTFX) -DNYX_VER_RL=$(NYXVERSION_REL)
 
-# BDK defines.
-CUSTOMDEFINES += -DBDK_MALLOC_NO_DEFRAG -DBDK_MC_ENABLE_AHB_REDIRECT -DBDK_EMUMMC_ENABLE
-CUSTOMDEFINES += -DBDK_WATCHDOG_FIQ_ENABLE -DBDK_RESTART_BL_ON_WDT
-CUSTOMDEFINES += -DGFX_INC=$(GFX_INC) -DFFCFG_INC=$(FFCFG_INC)
-
 # DRAM 8GB mode support.
 ifeq ($(DRAM_8GB),1)
 CUSTOMDEFINES += -DCONFIG_DRAM_8GB=1
 else
 CUSTOMDEFINES += -DCONFIG_DRAM_8GB=0
 endif
+
+# BDK defines.
+CUSTOMDEFINES += -DBDK_MALLOC_NO_DEFRAG -DBDK_MC_ENABLE_AHB_REDIRECT -DBDK_EMUMMC_ENABLE
+CUSTOMDEFINES += -DBDK_WATCHDOG_FIQ_ENABLE -DBDK_RESTART_BL_ON_WDT
+CUSTOMDEFINES += -DGFX_INC=$(GFX_INC) -DFFCFG_INC=$(FFCFG_INC)
 
 #CUSTOMDEFINES += -DDEBUG
 
@@ -101,9 +93,17 @@ TOOLSLZ := $(wildcard tools/lz)
 TOOLSB2C := $(wildcard tools/bin2c)
 TOOLS := $(TOOLSLZ) $(TOOLSB2C)
 
+ifndef IPLECHO
+T := $(shell $(MAKE) $(BUILDTDIR)/$(TARGET).elf --no-print-directory -nrRf $(firstword $(MAKEFILE_LIST)) IPLECHO="IPLOBJ" | grep -c "IPLOBJ")
+
+N := x
+C = $(words $N)$(eval N := x $N)
+IPLECHO = echo -ne "\r`expr "  [\`expr $C '*' 100 / $T\`" : '.*\(....\)$$'`%]\033[K"
+endif
+
 ################################################################################
 
-.PHONY: all all-both release clean $(MODULEDIRS) $(NYXDIR) $(LDRDIR) $(TOOLS)
+.PHONY: all all-both clean $(LDRDIR) $(TOOLS) $(NYXDIR) $(MODULEDIRS)
 
 all: $(TARGET).bin $(LDRDIR)
 	@printf ICTC49 >> $(OUTPUTDIR)/$(TARGET).bin
@@ -119,12 +119,6 @@ all: $(TARGET).bin $(LDRDIR)
 	@if [ ${BIN_SIZE} -gt 126296 ]; then echo "\e[1;33mPayload size exceeds limit!\e[0m"; fi
 	@echo "--------------------------------------"
 
-clean: $(TOOLS)
-	@rm -rf $(OBJS)
-	@rm -rf $(BUILDDIR)
-	@-rm -rf $(OUTPUTDIR) 2>/dev/null || true
-	@rm -f $(OUTPUTDIR)/*.bin $(OUTPUTDIR)/*.bso 2>/dev/null || true
-
 all-both:
 	@$(MAKE) --no-print-directory
 	@mv $(OUTPUTDIR)/$(TARGET).bin $(OUTPUTDIR)/$(TARGET)_4gb.bin
@@ -138,6 +132,67 @@ all-both:
 	@echo "  $(OUTPUTDIR)/$(TARGET)_4gb.bin"
 	@echo "  $(OUTPUTDIR)/$(TARGET)_8gb.bin"
 	@echo "--------------------------------------"
+
+clean: $(TOOLS)
+	@rm -rf $(BUILDDIR)
+	@rm -rf $(OUTPUTDIR)
+	@$(MAKE) --no-print-directory -C $(LDRDIR) $(MAKECMDGOALS) -$(MAKEFLAGS)
+
+$(MODULEDIRS):
+	@$(MAKE) --no-print-directory -C $@ $(MAKECMDGOALS) -$(MAKEFLAGS)
+
+$(NYXDIR):
+	@echo --------------------------------------
+	@$(MAKE) --no-print-directory -C $@ $(MAKECMDGOALS) -$(MAKEFLAGS)
+
+$(LDRDIR): $(TARGET).bin
+	@$(TOOLSLZ)/lz77 $(OUTPUTDIR)/$(TARGET).bin
+	@mv $(OUTPUTDIR)/$(TARGET).bin $(OUTPUTDIR)/$(TARGET)_unc.bin
+	@mv $(OUTPUTDIR)/$(TARGET).bin.00.lz payload_00
+	@mv $(OUTPUTDIR)/$(TARGET).bin.01.lz payload_01
+	@$(TOOLSB2C)/bin2c payload_00 > $(LDRDIR)/payload_00.h
+	@$(TOOLSB2C)/bin2c payload_01 > $(LDRDIR)/payload_01.h
+	@rm payload_00
+	@rm payload_01
+	@$(MAKE) --no-print-directory -C $@ $(MAKECMDGOALS) -$(MAKEFLAGS) PAYLOAD_NAME=$(TARGET)
+
+$(TOOLS):
+	@$(MAKE) --no-print-directory -C $@ $(MAKECMDGOALS) -$(MAKEFLAGS)
+
+$(TARGET).bin: $(BUILDTDIR)/$(TARGET).elf $(MODULEDIRS) $(NYXDIR) $(TOOLS)
+	@$(OBJCOPY) -S -O binary $< $(OUTPUTDIR)/$@
+	@echo --------------------------------------
+
+$(BUILDTDIR)/$(TARGET).elf: $(OBJS) $(TRACK_LDFLAGS)
+	@echo -ne "\r[100%] Linking $(TARGET).elf\033[K"
+	@$(CC) $(LDFLAGS) -T $(SOURCEDIR)/link.ld $(OBJS) -o $@
+	@printf "\n$(TARGET) was built with the following flags:\nCFLAGS:  $(CFLAGS)\nLDFLAGS: $(LDFLAGS)\n"
+
+$(BUILDTDIR)/%.o: %.c $(TRACK_CFLAGS) | $(BUILDTDIR)
+	@$(IPLECHO) Building $@
+	@$(CC) $(CFLAGS) $(BDKINC) -MMD -MP -c $< -o $@
+
+$(BUILDTDIR)/%.o: %.S $(TRACK_CFLAGS) | $(BUILDTDIR)
+	@$(IPLECHO) Building $@
+	@$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+
+$(BUILDTDIR):
+	@mkdir -p "$(BUILDDIR)"
+	@mkdir -p "$(BUILDTDIR)"
+	@mkdir -p "$(OUTPUTDIR)"
+
+# Non objects change detectors.
+$(TRACK_CFLAGS): $(BUILDTDIR)
+	@echo '$(CFLAGS)' | cmp -s - $@ || echo '$(CFLAGS)' > $@
+$(TRACK_LDFLAGS): $(BUILDTDIR)
+	@echo '$(LDFLAGS)' | cmp -s - $@ || echo '$(LDFLAGS)' > $@
+-include $(OBJS:.o=.d)
+
+################################################################################
+# hekate-ext release targets
+################################################################################
+
+.PHONY: release
 
 release:
 	@echo "Building release packages..."
@@ -157,12 +212,12 @@ release:
 	@cp $(OUTPUTDIR)/libsys_lp0.bso release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
 	@cp $(OUTPUTDIR)/libsys_minerva.bso release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
 	@cp res/hekate_ipl_template.ini release/hekate-ext-$(VERSION)-4GB/bootloader/ini/hekate_ipl.ini
-	@cp extras/res/*.bmp release/hekate-ext-$(VERSION)-4GB/bootloader/res/
-	@cp extras/sys/emummc.kipm release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
-	@cp extras/sys/res.pak release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
-	@cp extras/sys/thk.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
-	@cp extras/sys/l4t/*.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/l4t/
-	@powershell -Command "Compress-Archive -Path 'release/hekate-ext-$(VERSION)-4GB/*' -DestinationPath 'release/hekate-ext-$(VERSION)-4GB.zip' -Force"
+	@cp extras/res/*.bmp release/hekate-ext-$(VERSION)-4GB/bootloader/res/ 2>/dev/null || true
+	@cp extras/sys/emummc.kipm release/hekate-ext-$(VERSION)-4GB/bootloader/sys/ 2>/dev/null || true
+	@cp extras/sys/res.pak release/hekate-ext-$(VERSION)-4GB/bootloader/sys/ 2>/dev/null || true
+	@cp extras/sys/thk.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/ 2>/dev/null || true
+	@cp extras/sys/l4t/*.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/l4t/ 2>/dev/null || true
+	@cd release/hekate-ext-$(VERSION)-4GB && zip -r ../hekate-ext-$(VERSION)-4GB.zip . >/dev/null 2>&1 ; cd ../..
 	@echo "Creating 8GB release..."
 	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/ini
 	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/payloads
@@ -174,56 +229,14 @@ release:
 	@cp $(OUTPUTDIR)/libsys_lp0.bso release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
 	@cp $(OUTPUTDIR)/libsys_minerva.bso release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
 	@cp res/hekate_ipl_template.ini release/hekate-ext-$(VERSION)-8GB/bootloader/ini/hekate_ipl.ini
-	@cp extras/res/*.bmp release/hekate-ext-$(VERSION)-8GB/bootloader/res/
-	@cp extras/sys/emummc.kipm release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
-	@cp extras/sys/res.pak release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
-	@cp extras/sys/thk.bin release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
-	@cp extras/sys/l4t/*.bin release/hekate-ext-$(VERSION)-8GB/bootloader/sys/l4t/
-	@powershell -Command "Compress-Archive -Path 'release/hekate-ext-$(VERSION)-8GB/*' -DestinationPath 'release/hekate-ext-$(VERSION)-8GB.zip' -Force"
+	@cp extras/res/*.bmp release/hekate-ext-$(VERSION)-8GB/bootloader/res/ 2>/dev/null || true
+	@cp extras/sys/emummc.kipm release/hekate-ext-$(VERSION)-8GB/bootloader/sys/ 2>/dev/null || true
+	@cp extras/sys/res.pak release/hekate-ext-$(VERSION)-8GB/bootloader/sys/ 2>/dev/null || true
+	@cp extras/sys/thk.bin release/hekate-ext-$(VERSION)-8GB/bootloader/sys/ 2>/dev/null || true
+	@cp extras/sys/l4t/*.bin release/hekate-ext-$(VERSION)-8GB/bootloader/sys/l4t/ 2>/dev/null || true
+	@cd release/hekate-ext-$(VERSION)-8GB && zip -r ../hekate-ext-$(VERSION)-8GB.zip . >/dev/null 2>&1 ; cd ../..
 	@echo "--------------------------------------"
 	@echo "Release packages created:"
 	@echo "  release/hekate-ext-$(VERSION)-4GB.zip"
 	@echo "  release/hekate-ext-$(VERSION)-8GB.zip"
 	@echo "--------------------------------------"
-
-$(MODULEDIRS):
-	@$(MAKE) --no-print-directory -C $@ $(MAKECMDGOALS) -$(MAKEFLAGS)
-
-$(NYXDIR):
-	@$(MAKE) --no-print-directory -C $@ $(MAKECMDGOALS) -$(MAKEFLAGS)
-
-$(LDRDIR): $(TARGET).bin
-	@$(TOOLSLZ)/lz77 $(OUTPUTDIR)/$(TARGET).bin
-	@mv $(OUTPUTDIR)/$(TARGET).bin $(OUTPUTDIR)/$(TARGET)_unc.bin
-	@mv $(OUTPUTDIR)/$(TARGET).bin.00.lz payload_00
-	@mv $(OUTPUTDIR)/$(TARGET).bin.01.lz payload_01
-	@$(TOOLSB2C)/bin2c payload_00 > $(LDRDIR)/payload_00.h
-	@$(TOOLSB2C)/bin2c payload_01 > $(LDRDIR)/payload_01.h
-	@rm payload_00
-	@rm payload_01
-	@$(MAKE) --no-print-directory -C $@ $(MAKECMDGOALS) -$(MAKEFLAGS) PAYLOAD_NAME=$(TARGET)
-
-$(TOOLS):
-	@$(MAKE) --no-print-directory -C $@ $(MAKECMDGOALS) -$(MAKEFLAGS)
-
-$(TARGET).bin: $(BUILDDIR)/$(TARGET)/$(TARGET).elf $(MODULEDIRS) $(NYXDIR) $(TOOLS)
-	@$(OBJCOPY) -S -O binary $< $(OUTPUTDIR)/$@
-
-$(BUILDDIR)/$(TARGET)/$(TARGET).elf: $(OBJS)
-	@$(CC) $(LDFLAGS) -T $(SOURCEDIR)/link.ld $^ -o $@
-	@printf "$(TARGET) was built with the following flags:\nCFLAGS:  $(CFLAGS)\nLDFLAGS: $(LDFLAGS)\n"
-
-$(BUILDDIR)/$(TARGET)/%.o: %.c
-	@echo Building $@
-	@$(CC) $(CFLAGS) $(BDKINC) -c $< -o $@
-
-$(BUILDDIR)/$(TARGET)/%.o: %.S
-	@echo Building $@
-	@$(CC) $(CFLAGS) -c $< -o $@
-
-$(OBJS): $(BUILDDIR)/$(TARGET)
-
-$(BUILDDIR)/$(TARGET):
-	@mkdir -p "$(BUILDDIR)"
-	@mkdir -p "$(BUILDDIR)/$(TARGET)"
-	@mkdir -p "$(OUTPUTDIR)"

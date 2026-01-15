@@ -13,14 +13,14 @@ include ../Versions.inc
 ################################################################################
 
 TARGET := loader
-BUILDDIR := ../build
+BUILDDIR := ../build/$(TARGET)
 OUTPUTDIR := ../output
 BDKDIR := bdk
 BDKINC := -I../$(BDKDIR)
 VPATH += $(dir $(wildcard ../$(BDKDIR)/*/)) $(dir $(wildcard ../$(BDKDIR)/*/*/))
 
 # Main and graphics.
-OBJS = $(addprefix $(BUILDDIR)/$(TARGET)/, \
+OBJS = $(addprefix $(BUILDDIR)/, \
 	start.o loader.o lz.o \
 )
 
@@ -28,13 +28,6 @@ OBJS = $(addprefix $(BUILDDIR)/$(TARGET)/, \
 
 CUSTOMDEFINES := -DBL_MAGIC=$(IPL_MAGIC)
 CUSTOMDEFINES += -DBL_VER_MJ=$(BLVERSION_MAJOR) -DBL_VER_MN=$(BLVERSION_MINOR) -DBL_VER_HF=$(BLVERSION_HOTFX) -DBL_VER_RL=$(BLVERSION_REL)
-
-# DRAM 8GB mode support.
-ifeq ($(DRAM_8GB),1)
-CUSTOMDEFINES += -DCONFIG_DRAM_8GB=1
-else
-CUSTOMDEFINES += -DCONFIG_DRAM_8GB=0
-endif
 
 #TODO: Considering reinstating some of these when pointer warnings have been fixed.
 WARNINGS := -Wall -Wsign-compare -Wno-array-bounds -Wno-stringop-overflow
@@ -47,26 +40,26 @@ LDFLAGS = $(ARCH) -nostartfiles -lgcc -Wl,--nmagic,--gc-sections -Xlinker --defs
 
 .PHONY: all clean
 
-all: $(TARGET).bin $(TOOLSLZ) $(TOOLSB2C)
+all: $(TARGET).bin
 
 clean:
-	@rm -rf $(OBJS)
+	@rm -f payload_00.h
+	@rm -f payload_01.h
 
-$(TARGET).bin: $(BUILDDIR)/$(TARGET)/$(TARGET).elf
+$(TARGET).bin: $(BUILDDIR)/$(TARGET).elf
 	@$(OBJCOPY) -S -O binary $< $(OUTPUTDIR)/$(PAYLOAD_NAME).bin
 
-$(BUILDDIR)/$(TARGET)/$(TARGET).elf: $(OBJS)
+$(BUILDDIR)/$(TARGET).elf: $(OBJS)
 	@$(CC) $(LDFLAGS) -T link.ld $^ -o $@
 
-$(BUILDDIR)/$(TARGET)/%.o: %.c
+$(BUILDDIR)/%.o: %.c
 	@$(CC) $(CFLAGS) $(BDKINC) -c $< -o $@
 
-$(BUILDDIR)/$(TARGET)/%.o: %.S
+$(BUILDDIR)/%.o: %.S
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(OBJS): $(BUILDDIR)/$(TARGET)
+$(OBJS): $(BUILDDIR)
 
-$(BUILDDIR)/$(TARGET):
+$(BUILDDIR):
 	@mkdir -p "$(BUILDDIR)"
-	@mkdir -p "$(BUILDDIR)/$(TARGET)"
 	@mkdir -p "$(OUTPUTDIR)"

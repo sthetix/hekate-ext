@@ -111,7 +111,6 @@ typedef struct _launch_ctxt_t
 	bool svcperm;
 	bool debugmode;
 	bool stock;
-	bool ofw;
 	bool emummc_forced;
 
 	void *pkg3;
