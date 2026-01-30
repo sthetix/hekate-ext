@@ -211,7 +211,6 @@ release:
 	@cp $(OUTPUTDIR)/nyx.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
 	@cp $(OUTPUTDIR)/libsys_lp0.bso release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
 	@cp $(OUTPUTDIR)/libsys_minerva.bso release/hekate-ext-$(VERSION)-4GB/bootloader/sys/
-	@cp res/hekate_ipl_template.ini release/hekate-ext-$(VERSION)-4GB/bootloader/ini/hekate_ipl.ini
 	@cp extras/res/*.bmp release/hekate-ext-$(VERSION)-4GB/bootloader/res/ 2>/dev/null || true
 	@cp extras/sys/emummc.kipm release/hekate-ext-$(VERSION)-4GB/bootloader/sys/ 2>/dev/null || true
 	@cp extras/sys/res.pak release/hekate-ext-$(VERSION)-4GB/bootloader/sys/ 2>/dev/null || true
@@ -228,7 +227,6 @@ release:
 	@cp $(OUTPUTDIR)/nyx.bin release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
 	@cp $(OUTPUTDIR)/libsys_lp0.bso release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
 	@cp $(OUTPUTDIR)/libsys_minerva.bso release/hekate-ext-$(VERSION)-8GB/bootloader/sys/
-	@cp res/hekate_ipl_template.ini release/hekate-ext-$(VERSION)-8GB/bootloader/ini/hekate_ipl.ini
 	@cp extras/res/*.bmp release/hekate-ext-$(VERSION)-8GB/bootloader/res/ 2>/dev/null || true
 	@cp extras/sys/emummc.kipm release/hekate-ext-$(VERSION)-8GB/bootloader/sys/ 2>/dev/null || true
 	@cp extras/sys/res.pak release/hekate-ext-$(VERSION)-8GB/bootloader/sys/ 2>/dev/null || true
