@@ -66,6 +66,13 @@ else
 CUSTOMDEFINES += -DCONFIG_DRAM_8GB=0
 endif
 
+# DRAM suffix for binary naming.
+ifeq ($(DRAM_8GB),1)
+DRAM_SUFFIX = _8gb
+else
+DRAM_SUFFIX = _4gb
+endif
+
 # BDK defines.
 CUSTOMDEFINES += -DBDK_MALLOC_NO_DEFRAG -DBDK_MC_ENABLE_AHB_REDIRECT -DBDK_EMUMMC_ENABLE
 CUSTOMDEFINES += -DBDK_WATCHDOG_FIQ_ENABLE -DBDK_RESTART_BL_ON_WDT
@@ -103,35 +110,24 @@ endif
 
 ################################################################################
 
-.PHONY: all all-both clean $(LDRDIR) $(TOOLS) $(NYXDIR) $(MODULEDIRS)
+.PHONY: all clean $(LDRDIR) $(TOOLS) $(NYXDIR) $(MODULEDIRS)
 
 all: $(TARGET).bin $(LDRDIR)
 	@printf ICTC49 >> $(OUTPUTDIR)/$(TARGET).bin
+	@cp $(OUTPUTDIR)/$(TARGET).bin $(OUTPUTDIR)/$(TARGET)$(DRAM_SUFFIX).bin
+	@cp $(OUTPUTDIR)/$(TARGET)_unc.bin $(OUTPUTDIR)/$(TARGET)$(DRAM_SUFFIX)_unc.bin
 	@echo "--------------------------------------"
 	@echo "$(TARGET) size:"
 	@echo -n "Uncompr:  "
-	$(eval BIN_SIZE = $(shell wc -c < $(OUTPUTDIR)/$(TARGET)_unc.bin))
+	$(eval BIN_SIZE = $(shell wc -c < $(OUTPUTDIR)/$(TARGET)$(DRAM_SUFFIX)_unc.bin))
 	@echo $(BIN_SIZE)" Bytes"
 	@if [ ${BIN_SIZE} -gt 140288 ]; then echo "\e[1;33mUncompr size exceeds limit!\e[0m"; fi
 	@echo -n "Payload:  "
-	$(eval BIN_SIZE = $(shell wc -c < $(OUTPUTDIR)/$(TARGET).bin))
+	$(eval BIN_SIZE = $(shell wc -c < $(OUTPUTDIR)/$(TARGET)$(DRAM_SUFFIX).bin))
 	@echo $(BIN_SIZE)" Bytes"
 	@if [ ${BIN_SIZE} -gt 126296 ]; then echo "\e[1;33mPayload size exceeds limit!\e[0m"; fi
 	@echo "--------------------------------------"
-
-all-both:
-	@$(MAKE) --no-print-directory
-	@mv $(OUTPUTDIR)/$(TARGET).bin $(OUTPUTDIR)/$(TARGET)_4gb.bin
-	@mv $(OUTPUTDIR)/$(TARGET)_4gb.bin ../$(TARGET)_4gb.bin
-	@rm -rf $(BUILDDIR)
-	@$(MAKE) --no-print-directory DRAM_8GB=1
-	@mv ../$(TARGET)_4gb.bin $(OUTPUTDIR)/$(TARGET)_4gb.bin
-	@mv $(OUTPUTDIR)/$(TARGET).bin $(OUTPUTDIR)/$(TARGET)_8gb.bin
-	@echo "--------------------------------------"
-	@echo "Built 4GB and 8GB versions:"
-	@echo "  $(OUTPUTDIR)/$(TARGET)_4gb.bin"
-	@echo "  $(OUTPUTDIR)/$(TARGET)_8gb.bin"
-	@echo "--------------------------------------"
+	@echo "Built: $(OUTPUTDIR)/$(TARGET)$(DRAM_SUFFIX).bin"
 
 clean: $(TOOLS)
 	@rm -rf $(BUILDDIR)
@@ -192,16 +188,15 @@ $(TRACK_LDFLAGS): $(BUILDTDIR)
 # hekate-ext release targets
 ################################################################################
 
-.PHONY: release
+.PHONY: release release-4gb release-8gb
 
-release:
-	@echo "Building release packages..."
-	@$(MAKE) --no-print-directory all-both
-	@-rm -rf release 2>/dev/null || true
-	@rm -f release/*.zip 2>/dev/null || true
+# Build and zip 4GB release only
+release-4gb:
+	@echo "Building 4GB release..."
+	@$(MAKE) --no-print-directory clean
+	@$(MAKE) --no-print-directory DRAM_8GB=0
 	@mkdir -p release
 	$(eval VERSION := $(BLVERSION_MAJOR).$(BLVERSION_MINOR).$(BLVERSION_HOTFX))
-	@echo "Creating 4GB release..."
 	@mkdir -p release/hekate-ext-$(VERSION)-4GB/bootloader/ini
 	@mkdir -p release/hekate-ext-$(VERSION)-4GB/bootloader/payloads
 	@mkdir -p release/hekate-ext-$(VERSION)-4GB/bootloader/res
@@ -217,7 +212,17 @@ release:
 	@cp extras/sys/thk.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/ 2>/dev/null || true
 	@cp extras/sys/l4t/*.bin release/hekate-ext-$(VERSION)-4GB/bootloader/sys/l4t/ 2>/dev/null || true
 	@cd release/hekate-ext-$(VERSION)-4GB && zip -r ../hekate-ext-$(VERSION)-4GB.zip . >/dev/null 2>&1 ; cd ../..
-	@echo "Creating 8GB release..."
+	@echo "--------------------------------------"
+	@echo "4GB release created: release/hekate-ext-$(VERSION)-4GB.zip"
+	@echo "--------------------------------------"
+
+# Build and zip 8GB release only
+release-8gb:
+	@echo "Building 8GB release..."
+	@$(MAKE) --no-print-directory clean
+	@$(MAKE) --no-print-directory DRAM_8GB=1
+	@mkdir -p release
+	$(eval VERSION := $(BLVERSION_MAJOR).$(BLVERSION_MINOR).$(BLVERSION_HOTFX))
 	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/ini
 	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/payloads
 	@mkdir -p release/hekate-ext-$(VERSION)-8GB/bootloader/res
@@ -234,7 +239,15 @@ release:
 	@cp extras/sys/l4t/*.bin release/hekate-ext-$(VERSION)-8GB/bootloader/sys/l4t/ 2>/dev/null || true
 	@cd release/hekate-ext-$(VERSION)-8GB && zip -r ../hekate-ext-$(VERSION)-8GB.zip . >/dev/null 2>&1 ; cd ../..
 	@echo "--------------------------------------"
-	@echo "Release packages created:"
-	@echo "  release/hekate-ext-$(VERSION)-4GB.zip"
-	@echo "  release/hekate-ext-$(VERSION)-8GB.zip"
+	@echo "8GB release created: release/hekate-ext-$(VERSION)-8GB.zip"
+	@echo "--------------------------------------"
+
+# Build both releases sequentially (deletes previous)
+release:
+	@echo "Building both 4GB and 8GB release packages..."
+	@-rm -rf release 2>/dev/null || true
+	@$(MAKE) --no-print-directory release-4gb
+	@$(MAKE) --no-print-directory release-8gb
+	@echo "--------------------------------------"
+	@echo "All releases created in release/ folder"
 	@echo "--------------------------------------"
