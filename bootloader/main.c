@@ -410,7 +410,20 @@ parse_failed:
 	}
 	else
 	{
-		hos_launch(cfg_sec);
+		// Check for ofw=1 flag and reboot to OFW directly without hos_launch.
+		bool ofw_reboot = false;
+		LIST_FOREACH_ENTRY(ini_kv_t, kv, &cfg_sec->kvs, link)
+		{
+			if (!strcmp("ofw", kv->key) && kv->val[0] == '1')
+			{
+				ofw_reboot = true;
+				break;
+			}
+		}
+		if (ofw_reboot)
+			power_set_state(REBOOT_BYPASS_FUSES);
+		else
+			hos_launch(cfg_sec);
 
 wrong_emupath:
 		if (emummc_path)
@@ -555,7 +568,20 @@ parse_failed:
 	}
 	else
 	{
-		hos_launch(cfg_sec);
+		// Check for ofw=1 flag and reboot to OFW directly without hos_launch.
+		bool ofw_reboot = false;
+		LIST_FOREACH_ENTRY(ini_kv_t, kv, &cfg_sec->kvs, link)
+		{
+			if (!strcmp("ofw", kv->key) && kv->val[0] == '1')
+			{
+				ofw_reboot = true;
+				break;
+			}
+		}
+		if (ofw_reboot)
+			power_set_state(REBOOT_BYPASS_FUSES);
+		else
+			hos_launch(cfg_sec);
 
 wrong_emupath:
 		if (emummc_path)
@@ -984,7 +1010,20 @@ skip_list:
 			goto wrong_emupath;
 		}
 
-		hos_launch(cfg_sec);
+		// Check for ofw=1 flag and reboot to OFW directly without hos_launch.
+		bool ofw_reboot = false;
+		LIST_FOREACH_ENTRY(ini_kv_t, kv, &cfg_sec->kvs, link)
+		{
+			if (!strcmp("ofw", kv->key) && kv->val[0] == '1')
+			{
+				ofw_reboot = true;
+				break;
+			}
+		}
+		if (ofw_reboot)
+			power_set_state(REBOOT_BYPASS_FUSES);
+		else
+			hos_launch(cfg_sec);
 
 wrong_emupath:
 		if (emummc_path || b_cfg.boot_cfg & BOOT_CFG_TO_EMUMMC)
