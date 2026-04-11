@@ -293,6 +293,17 @@ static int _config_exo_fatal_payload(launch_ctxt_t *ctxt, const char *value)
 	return 0;
 }
 
+static int _config_ofw(launch_ctxt_t *ctxt, const char *value)
+{
+	if (*value == '1')
+	{
+		power_set_state(REBOOT_BYPASS_FUSES);
+		while (true)
+			bpmp_halt();
+	}
+	return 0;
+}
+
 static int _config_ucid(launch_ctxt_t *ctxt, const char *value)
 {
 	// Override uCID if set.
@@ -331,6 +342,7 @@ static const cfg_handler_t _config_handlers[] = {
 	{ "cal0blank",        _config_exo_cal0_blanking },
 	{ "cal0writesys",     _config_exo_cal0_writes_enable },
 	{ "ucid",             _config_ucid },
+	{ "ofw",              _config_ofw },
 	{ NULL, NULL },
 };
 
