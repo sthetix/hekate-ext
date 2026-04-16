@@ -530,6 +530,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 	lv_obj_set_opa_scale(gui->label_pct, LV_OPA_COVER);
 
 	u32 user_offset = 0;
+	bool fast_mode = (resized_count == EMUMMC_RAW_FAST_MODE);
 
 	if (resized_count)
 	{
@@ -655,7 +656,7 @@ static int _dump_emummc_raw_part(emmc_tool_gui_t *gui, int active_part, int part
 		sdmmc_storage_write(&sd_storage, 0, 1, &mbr);
 	}
 
-	if (resized_count)
+	if (resized_count && !fast_mode)
 	{
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, "Done!\n");
 
@@ -849,7 +850,7 @@ void dump_emummc_raw(emmc_tool_gui_t *gui, int part_idx, u32 sector_start, u32 r
 		goto out;
 	}
 
-	if (resized_count && !emummc_raw_derive_bis_keys())
+	if (resized_count && resized_count != EMUMMC_RAW_FAST_MODE && !emummc_raw_derive_bis_keys())
 	{
 		s_printf(gui->txt_buf, "#FFDD00 For formatting USER partition,#\n#FFDD00 BIS keys are needed!#\n");
 		lv_label_ins_text(gui->label_log, LV_LABEL_POS_LAST, gui->txt_buf);
